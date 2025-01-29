@@ -1,1 +1,9 @@
+  try:
+        while gameRunning:
+                        time.sleep(10)
+    except KeyboardInterrupt:
+    gameRunning = False
+      logEvent("G-AntiCheat stopped by user.")
 
+if __name__ == "__main__":
+    main()   
