@@ -12,9 +12,6 @@ import string
 import urllib.request, urllib.parse, urllib.error
 import pefile
 
-__author__ = "Ero Carrera"
-__version__ = pefile.__version__
-__contact__ = "ero.carrera@gmail.com"
 
 
 class SignatureDatabase(object):
