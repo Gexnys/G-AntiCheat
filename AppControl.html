@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-AntiCheat - Kontrol Paneli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .glow {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .scan-animation {
+            background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.3), transparent);
+            background-size: 200% 100%;
+            animation: scan 2s linear infinite;
+        }
+        @keyframes scan {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-900 text-white font-sans">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <nav class="w-64 bg-gray-800 border-r border-gray-700">
+            <div class="p-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                        <span class="text-xl font-bold">G</span>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">G-AntiCheat</h1>
+                        <p class="text-sm text-gray-400">v2.1.0</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-4 space-y-2">
+                <button onclick="showSection('dashboard')" class="nav-btn w-full text-left px-4 py-3 rounded-lg bg-green-600 text-white">
+                    📊 Dashboard
+                </button>
+                <button onclick="showSection('scan')" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700">
+                    🔍 Tarama
+                </button>
+                <button onclick="showSection('threats')" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700">
+                    ⚠️ Tehditler
+                </button>
+                <button onclick="showSection('protection')" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700">
+                    🛡️ Koruma
+                </button>
+                <button onclick="showSection('settings')" class="nav-btn w-full text-left px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700">
+                    ⚙️ Ayarlar
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Sistem Durumu</h2>
+                    <p class="text-gray-400">G-AntiCheat koruma sistemi aktif ve çalışıyor</p>
+                </header>
+
+                <!-- Status Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Sistem Durumu</p>
+                                <p class="text-2xl font-bold text-green-400">Aktif</p>
+                            </div>
+                            <div class="w-3 h-3 bg-green-400 rounded-full pulse-dot"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Engellenen Tehdit</p>
+                                <p class="text-2xl font-bold text-red-400" id="blockedThreats">247</p>
+                            </div>
+                            <div class="text-red-400 text-2xl">🛡️</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">Son Tarama</p>
+                                <p class="text-2xl font-bold text-blue-400" id="lastScan">2 dk önce</p>
+                            </div>
+                            <div class="text-blue-400 text-2xl">🔍</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm">CPU Kullanımı</p>
+                                <p class="text-2xl font-bold text-yellow-400" id="cpuUsage">12%</p>
+                            </div>
+                            <div class="text-yellow-400 text-2xl">⚡</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 class="text-xl font-bold mb-4">Tehdit Aktivitesi</h3>
+                        <canvas id="threatChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 class="text-xl font-bold mb-4">Sistem Performansı</h3>
+                        <canvas id="performanceChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <h3 class="text-xl font-bold mb-4">Son Aktiviteler</h3>
+                    <div class="space-y-3" id="recentActivity">
+                        <div class="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span class="flex-1">Hızlı tarama tamamlandı - Tehdit bulunamadı</span>
+                            <span class="text-gray-400 text-sm">2 dk önce</span>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
+                            <div class="w-2 h-2 bg-red-400 rounded-full"></div>
+                            <span class="flex-1">Şüpheli dosya engellendi: malware.exe</span>
+                            <span class="text-gray-400 text-sm">15 dk önce</span>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
+                            <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                            <span class="flex-1">Virüs tanımları güncellendi</span>
+                            <span class="text-gray-400 text-sm">1 saat önce</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scan Section -->
+            <div id="scan" class="section hidden p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Sistem Taraması</h2>
+                    <p class="text-gray-400">Sisteminizi virüs ve hile yazılımlarına karşı tarayın</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Tarama Türü Seçin</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="radio" name="scanType" value="quick" checked class="text-green-500">
+                                    <div>
+                                        <p class="font-semibold">Hızlı Tarama</p>
+                                        <p class="text-sm text-gray-400">Kritik sistem dosyalarını tarar (~2 dk)</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="radio" name="scanType" value="full" class="text-green-500">
+                                    <div>
+                                        <p class="font-semibold">Tam Tarama</p>
+                                        <p class="text-sm text-gray-400">Tüm sistemi detaylı tarar (~30 dk)</p>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="radio" name="scanType" value="custom" class="text-green-500">
+                                    <div>
+                                        <p class="font-semibold">Özel Tarama</p>
+                                        <p class="text-sm text-gray-400">Belirli klasörleri tarar</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Tarama Seçenekleri</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" checked class="text-green-500">
+                                    <span>Hile yazılımlarını tara</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" checked class="text-green-500">
+                                    <span>Virüsleri tara</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" class="text-green-500">
+                                    <span>Rootkit taraması</span>
+                                </label>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" class="text-green-500">
+                                    <span>Arşiv dosyalarını tara</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button onclick="startScan()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-xl transition-colors">
+                            🔍 Taramayı Başlat
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h3 class="text-xl font-bold mb-4">Tarama Durumu</h3>
+                        <div id="scanStatus" class="text-center py-8">
+                            <div class="text-6xl mb-4">🔍</div>
+                            <p class="text-xl font-semibold mb-2">Tarama Bekleniyor</p>
+                            <p class="text-gray-400">Tarama başlatmak için sol taraftaki seçenekleri kullanın</p>
+                        </div>
+                        
+                        <div id="scanProgress" class="hidden">
+                            <div class="mb-4">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span id="scanFile">Taranıyor...</span>
+                                    <span id="scanPercent">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-3">
+                                    <div id="progressBar" class="bg-green-500 h-3 rounded-full scan-animation" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="text-gray-400">Taranan Dosya</p>
+                                    <p class="font-semibold" id="scannedFiles">0</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400">Bulunan Tehdit</p>
+                                    <p class="font-semibold text-red-400" id="foundThreats">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threats Section -->
+            <div id="threats" class="section hidden p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Tehdit Yönetimi</h2>
+                    <p class="text-gray-400">Tespit edilen tehditleri görüntüleyin ve yönetin</p>
+                </header>
+
+                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+                    <div class="p-6 border-b border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold">Tespit Edilen Tehditler</h3>
+                            <button onclick="clearThreats()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                                🗑️ Tümünü Temizle
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="text-left p-4">Dosya Adı</th>
+                                    <th class="text-left p-4">Tehdit Türü</th>
+                                    <th class="text-left p-4">Risk Seviyesi</th>
+                                    <th class="text-left p-4">Konum</th>
+                                    <th class="text-left p-4">Tarih</th>
+                                    <th class="text-left p-4">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="threatsTable">
+                                <tr class="border-b border-gray-700">
+                                    <td class="p-4">cheat_engine.exe</td>
+                                    <td class="p-4"><span class="bg-red-600 text-white px-2 py-1 rounded text-sm">Hile Yazılımı</span></td>
+                                    <td class="p-4"><span class="text-red-400 font-semibold">Yüksek</span></td>
+                                    <td class="p-4">C:\Users\Downloads\</td>
+                                    <td class="p-4">15:30 - Bugün</td>
+                                    <td class="p-4">
+                                        <button onclick="quarantineThreat(this)" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm mr-2">Karantina</button>
+                                        <button onclick="deleteThreat(this)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Sil</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-700">
+                                    <td class="p-4">suspicious_file.dll</td>
+                                    <td class="p-4"><span class="bg-orange-600 text-white px-2 py-1 rounded text-sm">Şüpheli Dosya</span></td>
+                                    <td class="p-4"><span class="text-yellow-400 font-semibold">Orta</span></td>
+                                    <td class="p-4">C:\Windows\System32\</td>
+                                    <td class="p-4">14:22 - Bugün</td>
+                                    <td class="p-4">
+                                        <button onclick="quarantineThreat(this)" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm mr-2">Karantina</button>
+                                        <button onclick="deleteThreat(this)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">Sil</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Protection Section -->
+            <div id="protection" class="section hidden p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Koruma Ayarları</h2>
+                    <p class="text-gray-400">Gerçek zamanlı koruma ve güvenlik ayarlarını yönetin</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Gerçek Zamanlı Koruma</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Dosya Koruması</p>
+                                        <p class="text-sm text-gray-400">İndirilen dosyaları otomatik tara</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Web Koruması</p>
+                                        <p class="text-sm text-gray-400">Zararlı web sitelerini engelle</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Hile Algılama</p>
+                                        <p class="text-sm text-gray-400">Oyun hilelerini tespit et</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Otomatik İşlemler</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Otomatik Karantina</p>
+                                        <p class="text-sm text-gray-400">Tehditleri otomatik karantinaya al</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Günlük Tarama</p>
+                                        <p class="text-sm text-gray-400">Her gün otomatik hızlı tarama</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">İstisna Listesi</h3>
+                            <p class="text-gray-400 mb-4">Güvenilir dosya ve klasörleri ekleyin</p>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <span>C:\Games\TrustedGame\</span>
+                                    <button onclick="removeException(this)" class="text-red-400 hover:text-red-300">✕</button>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+                                    <span>safe_program.exe</span>
+                                    <button onclick="removeException(this)" class="text-red-400 hover:text-red-300">✕</button>
+                                </div>
+                            </div>
+                            <button onclick="addException()" class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">
+                                + İstisna Ekle
+                            </button>
+                        </div>
+
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Güncelleme Durumu</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span>Virüs Tanımları</span>
+                                    <span class="text-green-400">Güncel</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Program Sürümü</span>
+                                    <span class="text-green-400">v2.1.0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Son Güncelleme</span>
+                                    <span class="text-gray-400">2 saat önce</span>
+                                </div>
+                            </div>
+                            <button onclick="checkUpdates()" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                                🔄 Güncellemeleri Kontrol Et
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings" class="section hidden p-8">
+                <header class="mb-8">
+                    <h2 class="text-3xl font-bold mb-2">Sistem Ayarları</h2>
+                    <p class="text-gray-400">G-AntiCheat genel ayarlarını yapılandırın</p>
+                </header>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Genel Ayarlar</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Tarama Hassasiyeti</label>
+                                    <select class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2">
+                                        <option>Düşük</option>
+                                        <option selected>Orta</option>
+                                        <option>Yüksek</option>
+                                        <option>Maksimum</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">CPU Kullanım Limiti</label>
+                                    <input type="range" min="10" max="100" value="25" class="w-full">
+                                    <div class="flex justify-between text-sm text-gray-400 mt-1">
+                                        <span>10%</span>
+                                        <span>25%</span>
+                                        <span>100%</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Windows ile Başlat</p>
+                                        <p class="text-sm text-gray-400">Sistem açılışında otomatik başlat</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Bildirimler</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Tehdit Bildirimleri</p>
+                                        <p class="text-sm text-gray-400">Tehdit tespit edildiğinde bildir</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Tarama Tamamlandı</p>
+                                        <p class="text-sm text-gray-400">Tarama bittiğinde bildir</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Güncelleme Bildirimleri</p>
+                                        <p class="text-sm text-gray-400">Yeni güncellemeler için bildir</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Gelişmiş Ayarlar</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Heuristik Analiz</p>
+                                        <p class="text-sm text-gray-400">Bilinmeyen tehditleri tespit et</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Bulut Koruması</p>
+                                        <p class="text-sm text-gray-400">Bulut tabanlı tehdit analizi</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold">Davranış Analizi</p>
+                                        <p class="text-sm text-gray-400">Şüpheli program davranışlarını izle</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <h3 class="text-xl font-bold mb-4">Sistem Bilgileri</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Sürüm</span>
+                                    <span>G-AntiCheat v2.1.0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Lisans</span>
+                                    <span class="text-green-400">Premium</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Son Güncelleme</span>
+                                    <span>15.12.2024</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Veritabanı</span>
+                                    <span>v2024.12.15</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 space-y-3">
+                                <button onclick="exportSettings()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                                    📤 Ayarları Dışa Aktar
+                                </button>
+                                <button onclick="resetSettings()" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">
+                                    🔄 Fabrika Ayarlarına Dön
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update navigation buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-green-600', 'text-white');
+                btn.classList.add('text-gray-300', 'hover:bg-gray-700');
+            });
+            
+            event.target.classList.remove('text-gray-300', 'hover:bg-gray-700');
+            event.target.classList.add('bg-green-600', 'text-white');
+        }
+
+        // Scan functionality
+        let scanInterval;
+        let scanProgress = 0;
+        
+        function startScan() {
+            const scanType = document.querySelector('input[name="scanType"]:checked').value;
+            const scanStatus = document.getElementById('scanStatus');
+            const scanProgressDiv = document.getElementById('scanProgress');
+            const progressBar = document.getElementById('progressBar');
+            const scanPercent = document.getElementById('scanPercent');
+            const scanFile = document.getElementById('scanFile');
+            const scannedFiles = document.getElementById('scannedFiles');
+            const foundThreats = document.getElementById('foundThreats');
+            
+            // Hide status, show progress
+            scanStatus.classList.add('hidden');
+            scanProgressDiv.classList.remove('hidden');
+            
+            // Reset progress
+            scanProgress = 0;
+            let filesScanned = 0;
+            let threatsFound = 0;
+            
+            const files = [
+                'system32.dll', 'kernel32.dll', 'user32.dll', 'ntdll.dll',
+                'explorer.exe', 'winlogon.exe', 'services.exe', 'lsass.exe',
+                'chrome.exe', 'firefox.exe', 'steam.exe', 'discord.exe',
+                'game.exe', 'anticheat.dll', 'overlay.dll', 'input.dll'
+            ];
+            
+            scanInterval = setInterval(() => {
+                scanProgress += Math.random() * 8 + 2;
+                filesScanned += Math.floor(Math.random() * 3) + 1;
+                
+                if (Math.random() < 0.1 && threatsFound < 2) {
+                    threatsFound++;
+                }
+                
+                if (scanProgress >= 100) {
+                    scanProgress = 100;
+                    clearInterval(scanInterval);
+                    
+                    setTimeout(() => {
+                        scanStatus.innerHTML = `
+                            <div class="text-center py-8">
+                                <div class="text-6xl mb-4">✅</div>
+                                <p class="text-xl font-semibold mb-2 text-green-400">Tarama Tamamlandı</p>
+                                <p class="text-gray-400">${filesScanned} dosya tarandı, ${threatsFound} tehdit bulundu</p>
+                            </div>
+                        `;
+                        scanStatus.classList.remove('hidden');
+                        scanProgressDiv.classList.add('hidden');
+                        
+                        // Update dashboard stats
+                        updateStats();
+                    }, 1000);
+                }
+                
+                progressBar.style.width = scanProgress + '%';
+                scanPercent.textContent = Math.floor(scanProgress) + '%';
+                scanFile.textContent = 'Taranıyor: ' + files[Math.floor(Math.random() * files.length)];
+                scannedFiles.textContent = filesScanned;
+                foundThreats.textContent = threatsFound;
+            }, 200);
+        }
+
+        // Threat management
+        function quarantineThreat(button) {
+            const row = button.closest('tr');
+            button.textContent = 'Karantinada';
+            button.disabled = true;
+            button.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            button.classList.add('bg-gray-600');
+            
+            showNotification('Tehdit karantinaya alındı', 'success');
+        }
+
+        function deleteThreat(button) {
+            const row = button.closest('tr');
+            row.style.opacity = '0.5';
+            
+            setTimeout(() => {
+                row.remove();
+                showNotification('Tehdit silindi', 'success');
+            }, 500);
+        }
+
+        function clearThreats() {
+            const tbody = document.getElementById('threatsTable');
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">Tehdit bulunamadı</td></tr>';
+            showNotification('Tüm tehditler temizlendi', 'success');
+        }
+
+        // Protection settings
+        function removeException(button) {
+            const item = button.closest('div');
+            item.style.opacity = '0.5';
+            setTimeout(() => {
+                item.remove();
+                showNotification('İstisna kaldırıldı', 'info');
+            }, 300);
+        }
+
+        function addException() {
+            const container = event.target.closest('.bg-gray-800').querySelector('.space-y-3');
+            const newException = document.createElement('div');
+            newException.className = 'flex items-center justify-between p-3 bg-gray-700 rounded-lg';
+            newException.innerHTML = `
+                <span>C:\\NewFolder\\trusted_app.exe</span>
+                <button onclick="removeException(this)" class="text-red-400 hover:text-red-300">✕</button>
+            `;
+            container.appendChild(newException);
+            showNotification('Yeni istisna eklendi', 'success');
+        }
+
+        function checkUpdates() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '🔄 Kontrol ediliyor...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+                showNotification('Güncellemeler kontrol edildi - Sistem güncel', 'success');
+            }, 2000);
+        }
+
+        // Settings
+        function exportSettings() {
+            showNotification('Ayarlar dışa aktarıldı', 'success');
+        }
+
+        function resetSettings() {
+            if (confirm('Tüm ayarlar fabrika değerlerine dönecek. Devam etmek istiyor musunuz?')) {
+                showNotification('Ayarlar sıfırlandı', 'info');
+            }
+        }
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                type === 'success' ? 'bg-green-600' : 
+                type === 'error' ? 'bg-red-600' : 
+                'bg-blue-600'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function updateStats() {
+            const blockedThreats = document.getElementById('blockedThreats');
+            const currentCount = parseInt(blockedThreats.textContent);
+            blockedThreats.textContent = currentCount + Math.floor(Math.random() * 3) + 1;
+            
+            const lastScan = document.getElementById('lastScan');
+            lastScan.textContent = 'Az önce';
+            
+            // Add new activity
+            const activityContainer = document.getElementById('recentActivity');
+            const newActivity = document.createElement('div');
+            newActivity.className = 'flex items-center space-x-3 p-3 bg-gray-700 rounded-lg';
+            newActivity.innerHTML = `
+                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span class="flex-1">Sistem taraması tamamlandı - ${Math.floor(Math.random() * 3)} tehdit bulundu</span>
+                <span class="text-gray-400 text-sm">Az önce</span>
+            `;
+            activityContainer.insertBefore(newActivity, activityContainer.firstChild);
+            
+            // Remove old activities if more than 5
+            const activities = activityContainer.children;
+            if (activities.length > 5) {
+                activityContainer.removeChild(activities[activities.length - 1]);
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Threat Activity Chart
+            const threatCtx = document.getElementById('threatChart').getContext('2d');
+            new Chart(threatCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: 'Tespit Edilen Tehditler',
+                        data: [2, 1, 4, 3, 7, 5],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#9ca3af' } },
+                        y: { ticks: { color: '#9ca3af' } }
+                    }
+                }
+            });
+
+            // Performance Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(perfCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['CPU', 'RAM', 'Disk'],
+                    datasets: [{
+                        data: [12, 8, 5],
+                        backgroundColor: ['#fbbf24', '#34d399', '#60a5fa']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ffffff' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update system stats periodically
+        setInterval(() => {
+            const cpuUsage = document.getElementById('cpuUsage');
+            const newUsage = Math.floor(Math.random() * 10) + 8;
+            cpuUsage.textContent = newUsage + '%';
+        }, 5000);
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9905856497b5b76c',t:'MTc2MDc2NDE0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
